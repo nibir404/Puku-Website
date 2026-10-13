@@ -207,3 +207,16 @@ html.lenis body {
   from { background: color-mix(in oklab, var(--success) 22%, transparent); }
   to { background: transparent; }
 }
+
+/* Horizontal carousels: swipeable, no visible scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* App-like touch: no grey flash on tap */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
