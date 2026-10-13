@@ -4,8 +4,9 @@ import { StorySection } from "@/components/home/stories";
 import { CTA } from "@/components/home/sections";
 import { ScaledFrame } from "@/components/mock/frame";
 import { EditorMock } from "@/components/mock/editor";
-import { Eyebrow, FeatureRow, Heading, MentionCard, NextEditCard, Section, ShortcutList, Statement, Steps } from "@/components/page/blocks";
+import { Eyebrow, FeatureRow, Heading, MentionCard, NextEditCard, Section, ShortcutList, Statement } from "@/components/page/blocks";
 import { Reveal } from "@/components/fx/reveal";
+import { GraphRun } from "@/components/page/graph-run";
 
 export const metadata: Metadata = { title: "Puku Editor", description: "The editor where the agent sits beside you." };
 
@@ -33,13 +34,7 @@ export default function EditorPage() {
             <Eyebrow className="tracking-[0.12em]">01 — PUKU GRAPH</Eyebrow>
             <Heading text="Puku Graph guides the agent to the right code." className="max-w-[820px] leading-[1.167]! tracking-[-0.02em]!" />
           </div>
-          <Steps
-            items={[
-              { title: "Seed search", body: "Symbol match, stack trace, issue track and file hints pick the starting points." },
-              { title: "Dependency graph", body: "Imports, calls, inheritance and containment map how your code connects." },
-              { title: "Focused context", body: "Neighborhood expansion, graph ranking and context summaries keep the prompt tight." },
-            ]}
-          />
+          <GraphRun />
           <Statement lead="Shared context." body="Puku keeps what it learns across sessions and teammates, so nobody explains the codebase twice." />
         </div>
       </Section>
