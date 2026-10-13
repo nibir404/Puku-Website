@@ -119,10 +119,10 @@ export function HubIntro() {
           </Reveal>
         </div>
         <motion.div
-          initial={{ opacity: 0, x: 40, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 1.1, ease: EASE }}
+          initial={{ opacity: 0, x: 32 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: EASE }}
           className="relative w-full max-w-[720px] lg:mt-10"
         >
           <ThemeImage light="/img/hub-light.png" dark="/img/hub-dark.png" alt="Editor, CLI, Chat and App connected through PUKU.md to Diff, PR and Deploy" width={1440} height={386} className="h-auto w-full" />
@@ -246,7 +246,7 @@ export function FeatureGrid() {
                   alt=""
                   width={600}
                   height={250}
-                  className="h-auto w-full transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover/fc:scale-[1.025]"
+                  className="h-auto w-full transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover/fc:scale-[1.025]"
                 />
               </div>
               <div className="flex flex-col gap-2 px-3">
@@ -390,7 +390,7 @@ export function CTA({
             initial={{ scale: 0.4, opacity: 0, rotate: -20 }}
             whileInView={{ scale: 1, opacity: 1, rotate: 0 }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.3 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.2 }}
           >
             <Logo size={44} />
           </motion.div>

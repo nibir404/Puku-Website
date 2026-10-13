@@ -90,7 +90,7 @@ export function RoutingFlow() {
         </div>
         <Arrow on={step === 5} />
         <span
-          className={`rounded-control border px-[18px] py-3.5 text-[14px] transition-all duration-300 ${step === 5 ? "border-accent bg-accent text-accent-ink shadow-[0_0_24px_color-mix(in_oklab,var(--accent)_40%,transparent)]" : "border-fg bg-panel text-fg"}`}
+          className={`rounded-control border px-[18px] py-3.5 text-[14px] transition-[background-color,border-color,color,box-shadow] duration-300 ${step === 5 ? "border-accent bg-accent text-accent-ink shadow-[0_0_24px_color-mix(in_oklab,var(--accent)_40%,transparent)]" : "border-fg bg-panel text-fg"}`}
         >
           AI system
         </span>

@@ -70,7 +70,7 @@ function Dots({ count, active, go, labels }: { count: number; active: number; go
     <div className="flex justify-center gap-1.5 pt-4 sm:hidden" role="tablist">
       {Array.from({ length: count }, (_, i) => (
         <button key={i} role="tab" aria-selected={active === i} aria-label={labels[i]} onClick={() => go(i)} className="grid h-6 place-items-center px-0.5">
-          <span className={`block h-1.5 rounded-full transition-all duration-300 ${active === i ? "w-5 bg-fg" : "w-1.5 bg-selected"}`} />
+          <span className={`block h-1.5 rounded-full transition-[width,background-color] duration-300 ${active === i ? "w-5 bg-fg" : "w-1.5 bg-selected"}`} />
         </button>
       ))}
     </div>
@@ -210,7 +210,7 @@ export function Pricing() {
             animate={{ y: 0 }}
             exit={{ y: "110%" }}
             transition={{ type: "spring", stiffness: 420, damping: 40 }}
-            className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color-mix(in_oklab,var(--panel)_88%,transparent)] px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden"
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color-mix(in_oklab,var(--panel)_88%,transparent)] px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden"
           >
             <div className="flex items-center gap-3">
               <div className="flex min-w-0 flex-1 flex-col">

@@ -15,7 +15,7 @@ const pop = (delay = 0) => ({
   initial: { scale: 0, opacity: 0 },
   whileInView: { scale: 1, opacity: 1 },
   viewport: { once: true, amount: 0.6 },
-  transition: { delay, type: "spring" as const, stiffness: 420, damping: 18 },
+  transition: { delay, type: "spring" as const, stiffness: 420, damping: 30 },
 });
 const rise = (delay = 0, y = 12) => ({
   initial: { y, opacity: 0 },
@@ -99,7 +99,7 @@ export function MemoryCard() {
             initial={{ scale: 0.8 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 1.2, ease: EASE }}
+            transition={{ duration: 0.9, ease: EASE }}
             style={{ transformOrigin: "180px 190px" }}
           />
           <circle cx="180" cy="190" r="70" fill="var(--raised)" />

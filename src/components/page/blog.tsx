@@ -68,7 +68,7 @@ export function BlogIndex() {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 1 }}
+              transition={{ duration: 0.6, ease: EASE }}
               className="relative h-[clamp(260px,33.3vw,480px)] overflow-hidden rounded-panel border border-line bg-sidebar transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover/feat:-translate-y-1"
             >
               <div className="absolute inset-x-[5.5%] -top-10 bottom-0 opacity-[0.35]">
@@ -168,7 +168,7 @@ export function Post({ title, dek, cat, date }: { title: string; dek: string; ca
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.3, ease: EASE }}
+          transition={{ duration: 0.8, delay: 0.2, ease: EASE }}
           className="relative mx-auto h-[clamp(240px,33.3vw,480px)] max-w-[1120px] overflow-hidden rounded-panel border border-line bg-sidebar"
         >
           <div className="absolute inset-0 opacity-40">

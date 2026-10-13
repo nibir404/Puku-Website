@@ -31,7 +31,7 @@ export function PageHero({
         <motion.div
           initial={{ opacity: 0, scale: 0.985 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.1, ease: EASE }}
+          transition={{ duration: 0.9, ease: EASE }}
           className="relative overflow-hidden rounded-[clamp(20px,1.94vw,28px)] border border-line bg-sidebar"
           style={{ minHeight: stageHeight }}
         >
@@ -101,7 +101,7 @@ export function Waitlist({ cta = "Join the waitlist", note }: { cta?: string; no
             animate={{ opacity: 1, scale: 1 }}
             className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-control border border-[color-mix(in_oklab,var(--success)_35%,transparent)] bg-[color-mix(in_oklab,var(--success)_8%,transparent)] px-4 text-[15px] text-fg"
           >
-            <motion.span initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 400, damping: 14 }} className="grid size-6 place-items-center rounded-full bg-success text-[13px] text-main">
+            <motion.span initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 400, damping: 24 }} className="grid size-6 place-items-center rounded-full bg-success text-[13px] text-main">
               ✓
             </motion.span>
             You&apos;re on the list. We&apos;ll email <b className="font-[570]">{email}</b>.

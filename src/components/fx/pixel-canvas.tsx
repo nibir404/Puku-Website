@@ -62,6 +62,8 @@ export function PixelCanvas({
 
     let data: Data | null = null;
     let rgb: number[][] = [];
+    let pal: string[] = []; // opaque colours; per-dot alpha goes through globalAlpha (no string building per frame)
+    let twinkle: number[] = []; // skyline windows that keep flickering once settled
     let n = 0;
     // per-point randoms
     let rnd: Float32Array;
@@ -88,17 +90,35 @@ export function PixelCanvas({
       scale = fit === "cover" ? Math.max(sx, sy) : Math.min(sx, sy);
       ox = (W - data.w * scale) / 2;
       oy = align === "bottom" ? H - data.h * scale : align === "top" ? 0 : (H - data.h * scale) / 2;
+      start();
     };
 
     const ease = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
 
+    // Only loop while on screen; the IntersectionObserver restarts it.
+    const start = () => {
+      if (!raf && data && visible && !document.hidden) raf = requestAnimationFrame(draw);
+    };
+    let colour = -1;
+    const paint = (ci: number, a: number) => {
+      if (ci !== colour) {
+        ctx.fillStyle = pal[ci];
+        colour = ci;
+      }
+      ctx.globalAlpha = a > 1 ? 1 : a;
+    };
+
     const draw = (now: number) => {
-      raf = requestAnimationFrame(draw);
+      raf = 0;
       if (!data || !visible || document.hidden) return;
-      if (mode === "wave" && now - lastDraw < 33) return; // ambient backdrop: 30fps is plenty
-      lastDraw = now;
+      if (!reduce) raf = requestAnimationFrame(draw);
       if (startedAt < 0) startedAt = now;
       const t = reduce ? 1e6 : (now - startedAt) / 1000;
+      const settled = data.k === "r" && t > (mode === "assemble" ? 1.8 : 1.7);
+      // Ambient motion (wave backdrop, settled twinkle/breathing) only needs 30fps; entrances run at full rate.
+      if ((mode === "wave" || settled) && now - lastDraw < 33) return;
+      lastDraw = now;
+      colour = -1;
       ctx.clearRect(0, 0, W, H);
       mouse.x += (mouse.tx - mouse.x) * 0.12;
       mouse.y += (mouse.ty - mouse.y) * 0.12;
@@ -108,8 +128,7 @@ export function PixelCanvas({
 
       if (data.k === "r") {
         const s = (data.s ?? 3) * scale;
-        const settleAt = mode === "assemble" ? 1.8 : 1.7;
-        if (t > settleAt) {
+        if (settled) {
           // Settled: paint static pixels once to an offscreen layer, then only animate the few live ones.
           const key = `${W}x${H}`;
           if (!cache || cacheKey !== key) {
@@ -122,8 +141,8 @@ export function PixelCanvas({
             for (let i = 0; i < n; i++) {
               if (mode === "assemble" && rnd[i] > 0.93) continue;
               const o = i * 4;
-              const c = rgb[d[o + 2]];
-              cx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${d[o + 3] / 100})`;
+              cx.fillStyle = pal[d[o + 2]];
+              cx.globalAlpha = d[o + 3] / 100;
               cx.fillRect(ox + d[o] * scale, oy + d[o + 1] * scale, s, s);
             }
             cacheKey = key;
@@ -134,14 +153,12 @@ export function PixelCanvas({
           ctx.drawImage(cache, 0, 0);
           ctx.restore();
           if (mode === "assemble") {
-            for (let i = 0; i < n; i++) {
-              if (rnd[i] <= 0.93) continue;
+            for (const i of twinkle) {
               const o = i * 4;
-              const c = rgb[d[o + 2]];
-              const a = (d[o + 3] / 100) * (0.65 + 0.35 * Math.sin(t * (1.2 + rnd[i] * 2) + i));
-              ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+              paint(d[o + 2], (d[o + 3] / 100) * (0.65 + 0.35 * Math.sin(t * (1.2 + rnd[i] * 2) + i)));
               ctx.fillRect(ox + d[o] * scale, oy + d[o + 1] * scale, s, s);
             }
+            ctx.globalAlpha = 1;
           }
           return;
         }
@@ -149,7 +166,6 @@ export function PixelCanvas({
           const o = i * 4;
           const x = d[o],
             y = d[o + 1];
-          const c = rgb[d[o + 2]];
           let a = d[o + 3] / 100;
           let px = ox + x * scale,
             py = oy + y * scale;
@@ -173,15 +189,15 @@ export function PixelCanvas({
             a *= p * (0.82 + 0.18 * Math.sin(t * 0.8 + y * 0.03 + x * 0.01)); // breathe 8s-ish
           }
           if (a <= 0.01) continue;
-          ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+          paint(d[o + 2], a);
           ctx.fillRect(px, py, s, s);
         }
+        ctx.globalAlpha = 1;
       } else {
         for (let i = 0; i < n; i++) {
           const o = i * 5;
           const x = d[o],
             y = d[o + 1];
-          const c = rgb[d[o + 2]];
           let a = d[o + 3] / 100;
           let r = (d[o + 4] / 100) * scale;
           let px = ox + x * scale,
@@ -217,14 +233,18 @@ export function PixelCanvas({
             if (md < 120) r *= 1 + (1 - md / 120) * 0.8;
           }
           if (a <= 0.01 || r <= 0.05) continue;
-          ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${Math.min(a, 1)})`;
-          ctx.beginPath();
-          ctx.arc(px, py, r, 0, Math.PI * 2);
-          ctx.fill();
+          paint(d[o + 2], a);
+          if (r < 1) {
+            // Sub-pixel dots look identical as squares and skip path building.
+            ctx.fillRect(px - r, py - r, r * 2, r * 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(px, py, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
+        ctx.globalAlpha = 1;
       }
-      // static modes can stop once settled & no cursor/time-based effects matter
-      if (reduce) cancelAnimationFrame(raf);
     };
 
     const onMove = (e: PointerEvent) => {
@@ -248,12 +268,15 @@ export function PixelCanvas({
     const io = new IntersectionObserver(
       ([e]) => {
         visible = e.isIntersecting;
+        start();
       },
       { rootMargin: "100px" },
     );
     io.observe(canvas);
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
+    const onVisibility = () => start();
+    document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pointermove", onMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
 
@@ -262,10 +285,13 @@ export function PixelCanvas({
       data = json;
       n = json.d.length / (json.k === "r" ? 4 : 5);
       rgb = json.pal.map(hexToRgb);
+      pal = rgb.map((c) => `rgb(${c[0]},${c[1]},${c[2]})`);
       rnd = new Float32Array(n);
       for (let i = 0; i < n; i++) rnd[i] = Math.random();
+      twinkle = [];
+      for (let i = 0; i < n; i++) if (rnd[i] > 0.93) twinkle.push(i);
       resize();
-      raf = requestAnimationFrame(draw);
+      start();
     });
 
     return () => {
@@ -275,6 +301,7 @@ export function PixelCanvas({
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [name, mode, fit, align, theme]);
 

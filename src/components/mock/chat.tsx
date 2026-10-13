@@ -5,6 +5,7 @@
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { EASE } from "@/components/fx/reveal";
 import { sleep, typeInto, useAutoplay } from "./frame";
 
 type Block =
@@ -361,7 +362,7 @@ export function ChatMock({ autoplay = true, start = "thread" }: { autoplay?: boo
 
                   <div className="mt-4 flex flex-col">
                     {t.answer.slice(0, n).map((b, i) => (
-                      <motion.div key={`${t.id}${i}`} initial={{ opacity: 0, y: 8, filter: "blur(3px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.45 }}>
+                      <motion.div key={`${t.id}${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE }}>
                         {b.t === "h" && (
                           <div className="flex items-center gap-3 text-[24px] leading-8 font-[570] tracking-[-0.02em]">
                             <Image src="/img/chat-logo.png" alt="" width={15} height={17} /> {b.text}
