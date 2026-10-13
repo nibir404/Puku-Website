@@ -107,14 +107,14 @@ export function CopyCommand({ command = "curl -fsSL puku.sh/install | sh", class
       </span>
       <span className="relative grid size-4 shrink-0 place-items-center text-muted transition-colors group-hover/copy:text-fg">
         <Copy
-          className={`absolute transition-all duration-300 ${copied ? "scale-50 rotate-45 opacity-0" : "scale-100 opacity-100"}`}
+          className={`absolute transition-[opacity,scale,rotate] duration-300 ${copied ? "scale-50 rotate-45 opacity-0" : "scale-100 opacity-100"}`}
         />
         <Check
-          className={`absolute text-success transition-all duration-300 ${copied ? "scale-100 opacity-100" : "scale-50 -rotate-45 opacity-0"}`}
+          className={`absolute text-success transition-[opacity,scale,rotate] duration-300 ${copied ? "scale-100 opacity-100" : "scale-50 -rotate-45 opacity-0"}`}
         />
       </span>
       <span
-        className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-control bg-fg px-2 py-1 font-sans text-[12px] text-panel transition-all duration-300 ${
+        className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-control bg-fg px-2 py-1 font-sans text-[12px] text-panel transition-[opacity,translate] duration-200 ${
           copied ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
         }`}
       >

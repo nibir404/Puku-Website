@@ -18,11 +18,11 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const instance = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      // Frame-based smoothing follows the wheel closely; a fixed duration made scrolling trail behind input.
+      lerp: 0.12,
       smoothWheel: !reduce,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.4,
+      wheelMultiplier: 1,
+      // Touch keeps native momentum scrolling (Lenis leaves touch alone unless syncTouch is on).
     });
     instance.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => instance.raf(time * 1000);

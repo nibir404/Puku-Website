@@ -84,7 +84,7 @@ export function Hero({
         <motion.div
           initial={{ opacity: 0, scale: 0.985 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: EASE }}
+          transition={{ duration: 0.9, ease: EASE }}
           className="relative h-[clamp(760px,69.4vw,1000px)] overflow-hidden rounded-[clamp(20px,1.94vw,28px)] border border-line bg-sidebar"
         >
           <div className="absolute inset-x-0 top-40 h-full opacity-[0.28] dark:opacity-[0.34]">
@@ -172,7 +172,7 @@ export function Hero({
           ref={productRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.9 }}
+          transition={{ duration: 0.7, delay: 0.6, ease: EASE }}
           style={{ rotateX, y, scale, transformOrigin: "50% 0%" }}
           className="relative w-full max-w-[1200px] will-change-transform"
         >

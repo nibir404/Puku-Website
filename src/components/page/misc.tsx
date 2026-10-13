@@ -27,7 +27,7 @@ export function Manifesto() {
       <motion.div
         initial={{ opacity: 0, scale: 0.94, rotate: -2 }}
         animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={{ duration: 1.2, delay: 0.3, ease: EASE }}
+        transition={{ duration: 0.8, delay: 0.2, ease: EASE }}
         className="relative aspect-[420/303] w-full max-w-[420px] shrink-0 overflow-hidden rounded-panel border border-line bg-sidebar"
       >
         <div className="absolute -inset-16 opacity-40">
@@ -161,7 +161,7 @@ export function Contact() {
                 <span className="text-[15px] leading-[18px] text-fg">{r.t}</span>
                 <span className="font-mono text-[12px] leading-4 text-muted">{r.s}</span>
               </span>
-              <span className="text-muted opacity-0 transition-all group-hover/ct:translate-x-1 group-hover/ct:opacity-100">→</span>
+              <span className="text-muted opacity-0 transition-[opacity,translate] group-hover/ct:translate-x-1 group-hover/ct:opacity-100">→</span>
             </a>
           ))}
           <div className="flex items-center gap-4 border-b border-line py-[18px]">
@@ -182,7 +182,7 @@ export function Contact() {
         <AnimatePresence mode="wait">
           {state === "sent" ? (
             <motion.div key="sent" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="flex h-full min-h-[480px] flex-col items-center justify-center gap-4 rounded-panel border border-line bg-panel p-9 text-center">
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 14 }} className="grid size-14 place-items-center rounded-full bg-success text-[24px] text-main">
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 22 }} className="grid size-14 place-items-center rounded-full bg-success text-[24px] text-main">
                 ✓
               </motion.span>
               <h2 className="text-[28px] leading-9 font-[570] tracking-[-0.02em] text-fg">Thanks, {form.name.split(" ")[0]}.</h2>

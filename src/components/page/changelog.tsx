@@ -117,7 +117,7 @@ export function Changelog() {
                       width={2400}
                       height={1500}
                       sizes="(max-width: 800px) 100vw, 760px"
-                      className="h-auto w-full transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover/img:scale-[1.02]"
+                      className="h-auto w-full transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover/img:scale-[1.02]"
                     />
                   </div>
                 )}
