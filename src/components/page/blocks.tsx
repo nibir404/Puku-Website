@@ -29,25 +29,6 @@ export function Section({ children, className = "", border = true }: { children:
   );
 }
 
-/* Numbered step cards (Puku Graph) */
-export function Steps({ items }: { items: { title: string; body: string }[] }) {
-  return (
-    <Stagger className="grid grid-cols-1 gap-6 md:grid-cols-3" itemClassName="flex" stagger={0.09}>
-      {items.map((it, i) => (
-        <div
-          key={it.title}
-          className="group/st relative flex w-full flex-col gap-3 overflow-hidden rounded-panel border border-line bg-panel p-7 transition-[border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-accent"
-        >
-          <span className="font-mono text-[13px] leading-4 text-muted transition-colors group-hover/st:text-accent">{String(i + 1).padStart(2, "0")}</span>
-          <span className="text-[22px] leading-[30px] text-fg">{it.title}</span>
-          <span className="text-[16px] leading-6 text-muted">{it.body}</span>
-          <span className="absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-500 group-hover/st:scale-x-100" />
-        </div>
-      ))}
-    </Stagger>
-  );
-}
-
 /* Two-column statement row */
 export function Statement({ lead, body }: { lead: string; body: string }) {
   return (
