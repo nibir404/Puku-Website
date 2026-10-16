@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { buttonClass } from "@/components/ui/button";
-import { Chat, Chevron, Cloud, Code, Palette, Phone, Terminal, Wand } from "@/components/ui/icons";
+import { Blocks, Book, Chat, Chevron, Cloud, Code, Palette, Phone, Terminal, Wand } from "@/components/ui/icons";
 import { useLenis } from "@/components/smooth-scroll";
 
 const PRODUCTS = [
@@ -21,18 +21,21 @@ const SOON = [
   { icon: Palette, title: "Puku Design" },
   { icon: Cloud, title: "Puku Cloud" },
 ];
+const RESOURCES = [
+  { href: "/blog", icon: Book, title: "Blog", body: "Product notes, guides and engineering" },
+  { href: "/stories", icon: Blocks, title: "Stories", body: "Milestones and partnerships, told as stories" },
+];
 const LINKS = [
   { href: "/pricing", label: "Pricing" },
   { href: "https://docs.puku.sh", label: "Docs" },
-  { href: "/blog", label: "Resources" },
-  { href: "/contact", label: "Contact" },
 ];
+const LINKS_END = [{ href: "/contact", label: "Contact" }];
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState<null | "product" | "resources">(null);
   const [mobile, setMobile] = useState(false);
   const pathname = usePathname();
   const lenis = useLenis();
@@ -46,7 +49,7 @@ export function Nav() {
   }, []);
 
   useEffect(() => {
-    setMenu(false);
+    setMenu(null);
     setMobile(false);
   }, [pathname]);
 
@@ -55,16 +58,17 @@ export function Nav() {
     else lenis?.start();
   }, [mobile, lenis]);
 
-  const openMenu = () => {
+  const openMenu = (which: "product" | "resources") => {
     window.clearTimeout(closeTimer.current);
-    setMenu(true);
+    setMenu(which);
   };
   const closeMenu = () => {
-    closeTimer.current = window.setTimeout(() => setMenu(false), 120);
+    closeTimer.current = window.setTimeout(() => setMenu(null), 120);
   };
 
   const isActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href));
   const productActive = PRODUCTS.some((p) => isActive(p.href));
+  const resourcesActive = RESOURCES.some((r) => isActive(r.href));
 
   return (
     <>
@@ -96,20 +100,48 @@ export function Nav() {
               </motion.span>
             </Link>
             <ul className="hidden items-center gap-5 md:flex lg:gap-[22px]">
-              <li onMouseEnter={openMenu} onMouseLeave={closeMenu} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMenu((m) => !m)}
-                  aria-expanded={menu}
-                  className={`flex items-center gap-1 text-[14px] leading-[18px] transition-colors duration-200 hover:text-fg ${
-                    productActive || menu || scrolled ? "text-fg" : "text-muted"
-                  }`}
-                >
-                  Product
-                  <Chevron size={12} className={`transition-transform duration-300 ${menu ? "rotate-180" : ""}`} />
-                </button>
+              <li onMouseEnter={() => openMenu("product")} onMouseLeave={closeMenu} className="relative">
+                <MenuTrigger label="Product" open={menu === "product"} active={productActive || scrolled} onClick={() => setMenu((m) => (m === "product" ? null : "product"))} />
               </li>
               {LINKS.map((l) => (
+                <li key={l.href}>
+                  <NavLink href={l.href} active={isActive(l.href)}>
+                    {l.label}
+                  </NavLink>
+                </li>
+              ))}
+              <li onMouseEnter={() => openMenu("resources")} onMouseLeave={closeMenu} className="relative">
+                <MenuTrigger label="Resources" open={menu === "resources"} active={resourcesActive} onClick={() => setMenu((m) => (m === "resources" ? null : "resources"))} />
+                <AnimatePresence>
+                  {menu === "resources" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, scale: 0.985 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.985 }}
+                      transition={{ duration: 0.16, ease: "easeOut" }}
+                      className="absolute top-full -left-4 origin-top-left pt-4"
+                    >
+                      <div className="flex w-[340px] flex-col gap-0.5 rounded-panel border border-line bg-panel p-2 shadow-[0_2px_4px_rgb(40_44_34/0.06),0_12px_32px_rgb(40_44_34/0.1)]">
+                        {RESOURCES.map((r, i) => (
+                          <motion.div key={r.href} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i, duration: 0.22 }}>
+                            <Link
+                              href={r.href}
+                              className={`group/item flex gap-3 rounded-[8px] p-3 transition-colors duration-150 hover:bg-hover ${isActive(r.href) ? "bg-hover" : ""}`}
+                            >
+                              <r.icon className="mt-px text-fg transition-transform duration-300 group-hover/item:scale-110 group-hover/item:text-accent" />
+                              <span className="flex flex-col gap-0.5">
+                                <span className="text-[14px] leading-[18px] font-[570] text-fg">{r.title}</span>
+                                <span className="text-[13px] leading-4 text-muted">{r.body}</span>
+                              </span>
+                            </Link>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </li>
+              {LINKS_END.map((l) => (
                 <li key={l.href}>
                   <NavLink href={l.href} active={isActive(l.href)}>
                     {l.label}
@@ -153,9 +185,9 @@ export function Nav() {
 
           {/* Product mega menu */}
           <AnimatePresence>
-            {menu && (
+            {menu === "product" && (
               <motion.div
-                onMouseEnter={openMenu}
+                onMouseEnter={() => openMenu("product")}
                 onMouseLeave={closeMenu}
                 initial={{ opacity: 0, y: -4, scale: 0.985 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -233,7 +265,7 @@ export function Nav() {
               ))}
             </div>
             <div className="mt-8 flex flex-col">
-              {[...LINKS, { href: "/download", label: "Download" }, { href: "/about", label: "About" }].map((l, i) => (
+              {[...LINKS, ...RESOURCES.map((r) => ({ href: r.href, label: r.title })), ...LINKS_END, { href: "/download", label: "Download" }, { href: "/about", label: "About" }].map((l, i) => (
                 <motion.div key={l.href} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05, ease }}>
                   <Link href={l.href} className="flex items-center justify-between border-b border-line py-4 text-[28px] leading-9 tracking-[-0.02em] text-fg">
                     {l.label}
@@ -249,6 +281,21 @@ export function Nav() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function MenuTrigger({ label, open, active, onClick }: { label: string; open: boolean; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      aria-haspopup="menu"
+      className={`flex items-center gap-1 text-[14px] leading-[18px] transition-colors duration-200 hover:text-fg ${active || open ? "text-fg" : "text-muted"}`}
+    >
+      {label}
+      <Chevron size={12} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+    </button>
   );
 }
 
