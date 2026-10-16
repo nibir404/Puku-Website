@@ -7,24 +7,25 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { buttonClass } from "@/components/ui/button";
-import { Blocks, Book, Chat, Chevron, Cloud, Code, Palette, Phone, Terminal, Wand } from "@/components/ui/icons";
+import { Chat, Chevron, Code, Phone, Terminal } from "@/components/ui/icons";
+import { PLAN_EXTRAS, PRODUCT_CARDS, ProductMenu, RESOURCES, ResourcesMenu } from "@/components/layout/mega-menu";
 import { useLenis } from "@/components/smooth-scroll";
 import { isFocusRoute } from "@/lib/routes";
 
+const Laptop = ({ className }: { className?: string }) => (
+  <svg className={className} width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="3" y="4" width="18" height="12" rx="2" />
+    <path d="M2 20h20" />
+  </svg>
+);
+/** Every product, for the mobile menu (desktop uses the mega menu in ./mega-menu). */
 const PRODUCTS = [
-  { href: "/editor", icon: Code, title: "Puku Editor", body: "The Puku Editor desktop app" },
-  { href: "/cli", icon: Terminal, title: "Puku CLI", body: "Automation from your terminal" },
-  { href: "/chat", icon: Chat, title: "Puku Chat", body: "Chat and research in your browser" },
-  { href: "/app", icon: Phone, title: "Puku App", body: "Mobile chat, installation coming soon", tag: "PREVIEW" },
-];
-const SOON = [
-  { icon: Wand, title: "Puku Co-Work" },
-  { icon: Palette, title: "Puku Design" },
-  { icon: Cloud, title: "Puku Cloud" },
-];
-const RESOURCES = [
-  { href: "/blog", icon: Book, title: "Blog", body: "Product notes, guides and engineering" },
-  { href: "/stories", icon: Blocks, title: "Stories", body: "Milestones and partnerships, told as stories" },
+  { href: "/editor", icon: Code, title: "Puku Editor" },
+  { href: "/download", icon: Laptop, title: "Puku Desktop" },
+  { href: "/cli", icon: Terminal, title: "Puku CLI" },
+  { href: "/chat", icon: Chat, title: "Puku Chat" },
+  { href: "/app", icon: Phone, title: "Puku App" },
+  ...PLAN_EXTRAS.filter((x) => x.title !== "Puku App").map((x) => ({ href: x.href, icon: x.icon, title: x.title })),
 ];
 const LINKS = [
   { href: "/pricing", label: "Pricing" },
@@ -68,7 +69,7 @@ export function Nav() {
   };
 
   const isActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href));
-  const productActive = PRODUCTS.some((p) => isActive(p.href));
+  const productActive = PRODUCT_CARDS.some((p) => isActive(p.href)) || pathname === "/app";
   const resourcesActive = RESOURCES.some((r) => isActive(r.href));
 
   if (isFocusRoute(pathname)) return null;
@@ -115,34 +116,6 @@ export function Nav() {
               ))}
               <li onMouseEnter={() => openMenu("resources")} onMouseLeave={closeMenu} className="relative">
                 <MenuTrigger label="Resources" open={menu === "resources"} active={resourcesActive} onClick={() => setMenu((m) => (m === "resources" ? null : "resources"))} />
-                <AnimatePresence>
-                  {menu === "resources" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4, scale: 0.985 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -4, scale: 0.985 }}
-                      transition={{ duration: 0.16, ease: "easeOut" }}
-                      className="absolute top-full -left-4 origin-top-left pt-4"
-                    >
-                      <div className="flex w-[340px] flex-col gap-0.5 rounded-panel border border-line bg-panel p-2 shadow-[0_2px_4px_rgb(40_44_34/0.06),0_12px_32px_rgb(40_44_34/0.1)]">
-                        {RESOURCES.map((r, i) => (
-                          <motion.div key={r.href} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i, duration: 0.22 }}>
-                            <Link
-                              href={r.href}
-                              className={`group/item flex gap-3 rounded-[8px] p-3 transition-colors duration-150 hover:bg-hover ${isActive(r.href) ? "bg-hover" : ""}`}
-                            >
-                              <r.icon className="mt-px text-fg transition-transform duration-300 group-hover/item:scale-110 group-hover/item:text-accent" />
-                              <span className="flex flex-col gap-0.5">
-                                <span className="text-[14px] leading-[18px] font-[570] text-fg">{r.title}</span>
-                                <span className="text-[13px] leading-4 text-muted">{r.body}</span>
-                              </span>
-                            </Link>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </li>
               {LINKS_END.map((l) => (
                 <li key={l.href}>
@@ -186,59 +159,25 @@ export function Nav() {
             </button>
           </div>
 
-          {/* Product mega menu */}
+          {/* Mega menus: span the navbar's own width (inset to its padding when unscrolled) */}
           <AnimatePresence>
-            {menu === "product" && (
+            {menu && (
               <motion.div
-                onMouseEnter={() => openMenu("product")}
+                key="mega"
+                onMouseEnter={() => openMenu(menu)}
                 onMouseLeave={closeMenu}
-                initial={{ opacity: 0, y: -4, scale: 0.985 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -4, scale: 0.985 }}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.16, ease: "easeOut" }}
-                className="absolute top-full left-0 hidden origin-top-left pt-2 md:block"
-                style={{ left: scrolled ? 8 : 32 }}
+                className="absolute top-full hidden pt-2 md:block"
+                style={{ left: scrolled ? 0 : 28, right: scrolled ? 0 : 28 }}
               >
-                <div className="flex w-[760px] max-w-[calc(100vw-48px)] rounded-panel border border-line bg-panel p-2 shadow-[0_2px_4px_rgb(40_44_34/0.06),0_12px_32px_rgb(40_44_34/0.1)]">
-                  <div className="flex flex-1 flex-col gap-0.5 border-r border-line pr-2">
-                    {PRODUCTS.map((p, i) => (
-                      <motion.div
-                        key={p.href}
-                        initial={{ opacity: 0, x: -6 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.03 * i, duration: 0.22 }}
-                      >
-                        <Link
-                          href={p.href}
-                          className={`group/item flex gap-3 rounded-[8px] p-3 transition-colors duration-150 hover:bg-hover ${isActive(p.href) ? "bg-hover" : ""}`}
-                        >
-                          <p.icon className="mt-px text-fg transition-transform duration-300 group-hover/item:scale-110 group-hover/item:text-accent" />
-                          <span className="flex flex-col gap-0.5">
-                            <span className="flex items-center gap-2 text-[14px] leading-[18px] font-[570] text-fg">
-                              {p.title}
-                              {p.tag && <span className="font-mono text-[11px] leading-[14px] font-normal text-accent">{p.tag}</span>}
-                            </span>
-                            <span className="text-[13px] leading-4 text-muted">{p.body}</span>
-                          </span>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="flex w-[300px] shrink-0 flex-col gap-0.5 pl-2">
-                    <div className="px-3 pt-3 pb-1.5 font-mono text-[11px] leading-[14px] tracking-[0.08em] text-muted">COMING SOON</div>
-                    {SOON.map((s) => (
-                      <div key={s.title} className="flex items-center gap-3 px-3 py-2.5 text-muted">
-                        <s.icon />
-                        <span className="flex-1 text-[14px] leading-[18px]">{s.title}</span>
-                        <span className="rounded-control bg-hover px-2 py-[3px] text-[12px] leading-4">Soon</span>
-                      </div>
-                    ))}
-                    <Link href="/coming-soon" className="group/wl mt-auto flex flex-col gap-1 border-t border-line p-3">
-                      <span className="text-[13px] leading-4 text-fg">Get early access</span>
-                      <span className="text-[12px] leading-4 text-muted transition-colors group-hover/wl:text-accent">Join the waitlist →</span>
-                    </Link>
-                  </div>
-                </div>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div key={menu} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
+                    {menu === "product" ? <ProductMenu isActive={isActive} /> : <ResourcesMenu isActive={isActive} />}
+                  </motion.div>
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>
@@ -268,7 +207,7 @@ export function Nav() {
               ))}
             </div>
             <div className="mt-8 flex flex-col">
-              {[...LINKS, ...RESOURCES.map((r) => ({ href: r.href, label: r.title })), ...LINKS_END, { href: "/download", label: "Download" }, { href: "/about", label: "About" }].map((l, i) => (
+              {[...LINKS, ...RESOURCES.filter((r) => !r.href.startsWith("http")).map((r) => ({ href: r.href, label: r.title })), ...LINKS_END, { href: "/download", label: "Download" }, { href: "/about", label: "About" }].map((l, i) => (
                 <motion.div key={l.href} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05, ease }}>
                   <Link href={l.href} className="flex items-center justify-between border-b border-line py-4 text-[28px] leading-9 tracking-[-0.02em] text-fg">
                     {l.label}
