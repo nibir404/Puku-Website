@@ -32,6 +32,7 @@ const COLS = [
     title: "COMPANY",
     links: [
       ["About", "/about"],
+      ["Stories", "/stories"],
       ["Contact", "/contact"],
       ["Support", "/contact"],
       ["Careers · soon", ""],
