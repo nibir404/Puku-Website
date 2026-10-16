@@ -10,9 +10,10 @@ type Cur = "USD" | "BDT";
 type Audience = "individual" | "teams";
 
 const PLANS = [
+  // Paid plans go straight to onboarding until checkout exists; then point these at checkout and its success URL at /welcome?plan=…
   { name: "Free", tag: "For trying Puku on a side project.", usd: 0, bdt: 0, unit: "forever", cta: "Download", href: "/download", usage: "Limited agent requests", group: "INCLUDES", list: ["Editor, CLI and Chat", "50 agent requests / day", "Quick chat mode", "Community support"] },
-  { name: "Pro", tag: "For daily, focused work.", usd: 20, bdt: 2400, unit: "/ month", cta: "Start Pro", href: "/download", usage: "10× Free usage", group: "EVERYTHING IN FREE, PLUS", list: ["500 agent requests / day", "Research + Deep modes", "Background runs", "Puku App preview"] },
-  { name: "Team", tag: "For teams sharing one codebase.", usd: 40, bdt: 4800, unit: "/ seat / month", cta: "Start a team", href: "/contact", usage: "Pooled across seats", group: "EVERYTHING IN PRO, PLUS", list: ["Puku Bot in Slack + GitHub", "Puku Cloud agents", "Feluda code review", "Shared memory + skills", "Admin + usage dashboard"] },
+  { name: "Pro", tag: "For daily, focused work.", usd: 20, bdt: 2400, unit: "/ month", cta: "Start Pro", href: "/welcome?plan=pro", usage: "10× Free usage", group: "EVERYTHING IN FREE, PLUS", list: ["500 agent requests / day", "Research + Deep modes", "Background runs", "Puku App preview"] },
+  { name: "Team", tag: "For teams sharing one codebase.", usd: 40, bdt: 4800, unit: "/ seat / month", cta: "Start a team", href: "/welcome?plan=team", usage: "Pooled across seats", group: "EVERYTHING IN PRO, PLUS", list: ["Puku Bot in Slack + GitHub", "Puku Cloud agents", "Feluda code review", "Shared memory + skills", "Admin + usage dashboard"] },
   { name: "Enterprise", tag: "For security and scale needs.", usd: -1, bdt: -1, unit: "", cta: "Talk to us", href: "/contact", usage: "Custom volume", group: "EVERYTHING IN TEAM, PLUS", list: ["Higher Cloud + Feluda limits", "SSO / SAML, SCIM", "Audit log + retention", "Self-hosted sandboxes", "Invoicing + dedicated support"] },
 ];
 
