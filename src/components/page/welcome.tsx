@@ -5,18 +5,23 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { EASE, Stagger } from "@/components/fx/reveal";
 import { Logo } from "@/components/ui/logo";
-import { Apple, Chat, Check, Copy, Terminal } from "@/components/ui/icons";
+import { Apple, Chat, Check, Code, Copy, Terminal } from "@/components/ui/icons";
 
 /* Post-payment onboarding: pick how to use Puku. Rows tick to "done" as they're used (kept in localStorage). */
 
 type Os = "Mac" | "Windows" | "Linux";
-type ProductId = "desktop" | "cli" | "chat" | "bot" | "cowork";
+type ProductId = "editor" | "desktop" | "cli" | "chat" | "bot" | "feluda" | "cowork";
 
 const CLI_COMMAND = "curl -fsSL puku.sh/install | sh";
+/** Puku Desktop's download page. TODO: replace with the real Desktop download URL. */
+const DESKTOP_URL = "/download";
+/** Where Bot and Feluda are set up. TODO: replace with the Slack/GitHub install flows. */
+const BOT_URL = "https://docs.puku.sh";
+const FELUDA_URL = "https://docs.puku.sh";
 const STORAGE_KEY = "puku-welcome-done";
 /** Rows that count toward setup progress (Cowork is early access, not set up yet). */
-const COUNTED: ProductId[] = ["desktop", "cli", "chat", "bot"];
-const NAMES: Record<ProductId, string> = { desktop: "Desktop", cli: "CLI", chat: "Chat", bot: "Bot", cowork: "Cowork" };
+const COUNTED: ProductId[] = ["editor", "desktop", "cli", "chat", "bot", "feluda"];
+const NAMES: Record<ProductId, string> = { editor: "Editor", desktop: "Desktop", cli: "CLI", chat: "Chat", bot: "Bot", feluda: "Feluda", cowork: "Cowork" };
 
 /** "Chat is ready · 3 to go", "Chat and CLI are ready · 2 to go", "You're all set". */
 function progressLabel(ready: ProductId[]) {
@@ -37,6 +42,12 @@ const Bot = (p: { size?: number }) => (
   <svg width={p.size ?? 20} height={p.size ?? 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <rect x="4" y="8" width="16" height="12" rx="3" />
     <path d="M12 8V4M9 14h.01M15 14h.01" />
+  </svg>
+);
+const Shield = (p: { size?: number }) => (
+  <svg width={p.size ?? 20} height={p.size ?? 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z" />
+    <path d="m9 12 2 2 4-4" />
   </svg>
 );
 const People = (p: { size?: number }) => (
@@ -74,11 +85,11 @@ export function Welcome({ plan }: { plan: string }) {
     setOs(/Win/.test(ua) ? "Windows" : /Linux|X11/.test(ua) && !/Android/.test(ua) ? "Linux" : "Mac");
   }, []);
   const ready = COUNTED.filter((id) => done.includes(id));
-  const icons: Record<ProductId, React.ReactNode> = { desktop: <Laptop size={13} />, cli: <Terminal size={13} />, chat: <Chat size={13} />, bot: <Bot size={13} />, cowork: <People size={13} /> };
+  const icons: Record<ProductId, React.ReactNode> = { editor: <Code size={13} />, feluda: <Shield size={13} />, desktop: <Laptop size={13} />, cli: <Terminal size={13} />, chat: <Chat size={13} />, bot: <Bot size={13} />, cowork: <People size={13} /> };
 
   return (
     <section className="flex min-h-svh justify-center px-4 pt-[clamp(48px,8vw,96px)] pb-16">
-      <Stagger immediate stagger={0.07} y={12} className="flex w-full max-w-[640px] flex-col gap-10">
+      <Stagger immediate stagger={0.07} y={12} className="flex w-full max-w-[760px] flex-col gap-11">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" aria-label="Puku home">
             <Logo size={24} />
@@ -99,26 +110,41 @@ export function Welcome({ plan }: { plan: string }) {
           <p className="text-[17px] leading-[26px] text-muted">Your plan works on every surface, sharing one memory. Set up one now and add the rest any time.</p>
         </div>
 
-        <ul className="flex flex-col overflow-hidden rounded-panel border border-line bg-panel">
-          <Row icon={<Laptop />} title="Puku Desktop" tag="RECOMMENDED" body="Editor, agents and memory in one app on your computer." done={done.includes("desktop")}>
-            <Link href="/download" onClick={() => mark("desktop")} className="inline-flex h-9 items-center gap-2 rounded-control bg-fg px-3.5 text-[14px] font-[570] text-panel transition-transform active:scale-[0.97]">
-              {os === "Mac" && <Apple size={14} />}
-              Download for {os}
-            </Link>
-          </Row>
-          <Row icon={<Terminal size={20} />} title="Puku CLI" body="Run agents from your terminal, in any repo." done={done.includes("cli")} stacked>
-            <CopyLine onCopy={() => mark("cli")} />
-          </Row>
-          <Row icon={<Chat size={20} />} title="Puku Chat" body="Chat and research in your browser, nothing to install." done={done.includes("chat")}>
-            <ActionLink href="https://chat.puku.sh/new" external onClick={() => mark("chat")} done={done.includes("chat")} doneLabel="Opened" label="Open Chat" />
-          </Row>
-          <Row icon={<Bot />} title="Puku Bot" body="Mention @puku in Slack or on GitHub issues and PRs." done={done.includes("bot")}>
-            <ActionLink href="https://docs.puku.sh" external onClick={() => mark("bot")} done={done.includes("bot")} doneLabel="Connected" label="Connect" />
-          </Row>
-          <Row icon={<People />} title="Puku Cowork" soon body="Agents that work alongside your whole team." last>
-            <ActionLink href="/coming-soon" label="Get early access" />
-          </Row>
-        </ul>
+        <Group n="01" label="ON YOUR COMPUTER" aside={<Link href="/download" className="text-[13px] text-muted transition-colors hover:text-fg">Also for Windows and Linux →</Link>}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <InstallCard icon={<Code size={22} />} title="Puku Editor" body="The AI-native code editor, with agents built in. Best for writing and shipping code." recommended done={done.includes("editor")}>
+              <DownloadButton href="/download" os={os} primary onClick={() => mark("editor")} />
+            </InstallCard>
+            <InstallCard icon={<Laptop size={22} />} title="Puku Desktop" body="Chat and agents in an app on your computer. Best for research and everyday work." done={done.includes("desktop")}>
+              <DownloadButton href={DESKTOP_URL} os={os} onClick={() => mark("desktop")} />
+            </InstallCard>
+          </div>
+        </Group>
+
+        <Group n="02" label="NO INSTALL NEEDED">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.35fr_1fr]">
+            <MiniCard icon={<Terminal size={18} />} title="Puku CLI" body="Agents in your terminal, in any repo." done={done.includes("cli")}>
+              <CopyLine onCopy={() => mark("cli")} />
+            </MiniCard>
+            <MiniCard icon={<Chat size={18} />} title="Puku Chat" body="Chat and research in your browser." done={done.includes("chat")}>
+              <ActionLink href="https://chat.puku.sh/new" external onClick={() => mark("chat")} done={done.includes("chat")} doneLabel="Opened" label="Open Chat ↗" wide />
+            </MiniCard>
+          </div>
+        </Group>
+
+        <Group n="03" label="CONNECT YOUR TEAM">
+          <ul className="flex flex-col overflow-hidden rounded-panel border border-line bg-panel">
+            <Row icon={<Bot />} title="Puku Bot" body="Mention @puku in Slack or on GitHub issues and PRs." done={done.includes("bot")}>
+              <ActionLink href={BOT_URL} external onClick={() => mark("bot")} done={done.includes("bot")} doneLabel="Connected" label="Connect" />
+            </Row>
+            <Row icon={<Shield />} title="Feluda" body="Security review on every pull request, by our security model." done={done.includes("feluda")}>
+              <ActionLink href={FELUDA_URL} external onClick={() => mark("feluda")} done={done.includes("feluda")} doneLabel="Set up" label="Set up" />
+            </Row>
+            <Row icon={<People />} title="Puku Cowork" soon body="Agents that work alongside your whole team." last>
+              <ActionLink href="/coming-soon" label="Get early access" />
+            </Row>
+          </ul>
+        </Group>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -155,60 +181,116 @@ export function Welcome({ plan }: { plan: string }) {
   );
 }
 
-function Row({
-  icon,
-  title,
-  body,
-  tag,
-  soon,
-  done,
-  stacked,
-  last,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  tag?: string;
-  soon?: boolean;
-  done?: boolean;
-  stacked?: boolean;
-  last?: boolean;
-  children: React.ReactNode;
-}) {
+function Group({ n, label, aside, children }: { n: string; label: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <li className={`flex gap-4 px-5 py-5 transition-colors hover:bg-[color-mix(in_oklab,var(--hover)_50%,transparent)] sm:pl-6 ${last ? "" : "border-b border-line"} ${stacked ? "items-start" : "flex-wrap items-center sm:flex-nowrap"}`}>
+    <section className="flex flex-col gap-3.5" aria-label={label.toLowerCase()}>
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted">
+          {n} · {label}
+        </h2>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function DoneBadge({ done }: { done?: boolean }) {
+  return (
+    <AnimatePresence>
+      {done && (
+        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 500, damping: 26 }} className="absolute -right-1.5 -bottom-1.5 grid size-[18px] place-items-center rounded-full border-2 border-panel bg-success text-panel">
+          <Check size={10} strokeWidth={3} />
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/** Big card for the apps you install: the page's main decision. */
+function InstallCard({ icon, title, body, recommended, done, children }: { icon: React.ReactNode; title: string; body: string; recommended?: boolean; done?: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      className={`flex flex-col justify-between gap-7 rounded-panel border bg-panel p-6 transition-[transform,border-color] duration-300 hover:-translate-y-0.5 ${
+        recommended ? "border-accent shadow-[0_0_0_3px_color-mix(in_oklab,var(--accent)_10%,transparent)]" : "border-line hover:border-selected"
+      }`}
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <span className="relative grid size-11 place-items-center rounded-[10px] border border-line bg-sidebar text-fg">
+            {icon}
+            <DoneBadge done={done} />
+          </span>
+          {recommended && <span className="font-mono text-[11px] tracking-[0.06em] text-accent">RECOMMENDED</span>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <h3 className="text-[20px] leading-6 font-[570] tracking-[-0.01em] text-fg">{title}</h3>
+          <p className="text-[14px] leading-[21px] text-muted">{body}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Compact card for surfaces that need no install. */
+function MiniCard({ icon, title, body, done, children }: { icon: React.ReactNode; title: string; body: string; done?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col justify-between gap-3.5 rounded-panel border border-line bg-panel p-5">
+      <div className="flex items-center gap-3">
+        <span className="relative grid size-9 shrink-0 place-items-center rounded-[8px] border border-line bg-sidebar text-fg">
+          {icon}
+          <DoneBadge done={done} />
+        </span>
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-[16px] leading-5 font-[570] text-fg">{title}</h3>
+          <p className="text-[13px] leading-[18px] text-muted">{body}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Row({ icon, title, body, soon, done, last, children }: { icon: React.ReactNode; title: string; body: string; soon?: boolean; done?: boolean; last?: boolean; children: React.ReactNode }) {
+  return (
+    <li className={`flex flex-wrap items-center gap-4 px-5 py-5 transition-colors hover:bg-[color-mix(in_oklab,var(--hover)_50%,transparent)] sm:flex-nowrap sm:pl-6 ${last ? "" : "border-b border-line"}`}>
       <span className={`relative grid size-10 shrink-0 place-items-center rounded-[10px] border text-fg ${soon ? "border-dashed border-line text-muted" : "border-line bg-sidebar"}`}>
         {icon}
-        <AnimatePresence>
-          {done && (
-            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 500, damping: 26 }} className="absolute -right-1.5 -bottom-1.5 grid size-[18px] place-items-center rounded-full border-2 border-panel bg-success text-panel">
-              <Check size={10} strokeWidth={3} />
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <DoneBadge done={done} />
       </span>
-      <div className={`flex min-w-0 flex-1 flex-col ${stacked ? "gap-2.5" : "gap-[3px]"}`}>
-        <div className="flex flex-col gap-[3px]">
-          <div className="flex items-center gap-2">
-            <span className="text-[16px] leading-5 font-[570] text-fg">{title}</span>
-            {tag && <span className="font-mono text-[11px] tracking-[0.06em] text-accent">{tag}</span>}
-            {soon && <span className="rounded-control bg-hover px-[7px] py-0.5 text-[12px] text-muted">Soon</span>}
-          </div>
-          <span className="text-[14px] leading-5 text-muted">{body}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+        <div className="flex items-center gap-2">
+          <span className="text-[16px] leading-5 font-[570] text-fg">{title}</span>
+          {soon && <span className="rounded-control bg-hover px-[7px] py-0.5 text-[12px] text-muted">Soon</span>}
         </div>
-        {stacked && children}
+        <span className="text-[14px] leading-5 text-muted">{body}</span>
       </div>
-      {!stacked && <div className="ml-14 shrink-0 sm:ml-0">{children}</div>}
+      <div className="ml-14 shrink-0 sm:ml-0">{children}</div>
     </li>
   );
 }
 
-function ActionLink({ href, label, external, onClick, done, doneLabel }: { href: string; label: string; external?: boolean; onClick?: () => void; done?: boolean; doneLabel?: string }) {
+function DownloadButton({ href, os, primary, onClick }: { href: string; os: Os; primary?: boolean; onClick: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex h-10 w-full items-center justify-center gap-2 rounded-control px-3.5 text-[14px] transition-[background-color,border-color,transform] active:scale-[0.97] ${
+        primary ? "bg-fg font-[570] text-panel" : "border border-line bg-panel text-fg hover:border-selected hover:bg-hover"
+      }`}
+    >
+      {os === "Mac" && <Apple size={14} />}
+      Download for {os}
+    </Link>
+  );
+}
+
+function ActionLink({ href, label, external, onClick, done, doneLabel, wide }: { href: string; label: string; external?: boolean; onClick?: () => void; done?: boolean; doneLabel?: string; wide?: boolean }) {
   const ext = external ? { target: "_blank", rel: "noopener noreferrer" } : {};
   if (done)
     return (
-      <span className="flex h-9 items-center gap-3 text-[14px]">
+      <span className={`flex h-9 items-center gap-3 text-[14px] ${wide ? "justify-between" : ""}`}>
         <span className="flex items-center gap-1.5 text-success">
           <Check size={14} strokeWidth={2.4} />
           {doneLabel}
@@ -219,7 +301,7 @@ function ActionLink({ href, label, external, onClick, done, doneLabel }: { href:
       </span>
     );
   return (
-    <a href={href} {...ext} onClick={onClick} className="inline-flex h-9 items-center rounded-control border border-line bg-panel px-3.5 text-[14px] text-fg transition-[background-color,border-color,transform] hover:border-selected hover:bg-hover active:scale-[0.97]">
+    <a href={href} {...ext} onClick={onClick} className={`${wide ? "flex h-[38px] w-full justify-center" : "inline-flex h-9"} items-center rounded-control border border-line bg-panel px-3.5 text-[14px] text-fg transition-[background-color,border-color,transform] hover:border-selected hover:bg-hover active:scale-[0.97]`}>
       {label}
     </a>
   );
@@ -236,7 +318,7 @@ function CopyLine({ onCopy }: { onCopy: () => void }) {
       <button
         type="button"
         onClick={() => {
-          navigator.clipboard?.writeText(CLI_COMMAND);
+          navigator.clipboard?.writeText(CLI_COMMAND).catch(() => {}); // unfocused tab / no permission: still mark as done
           setCopied(true);
           onCopy();
           setTimeout(() => setCopied(false), 1500);
