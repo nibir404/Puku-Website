@@ -97,3 +97,14 @@ export const Menu = ({ size = 18, ...p }: P) => (
     <path d="M4 8h16M4 16h16" />
   </svg>
 );
+export const Book = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+  </svg>
+);
+export const Blocks = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="m12 3 7 4v8l-7 4-7-4V7z" />
+    <path d="m5 7 7 4 7-4M12 11v8" />
+  </svg>
+);
