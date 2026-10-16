@@ -16,6 +16,16 @@ const CLI_COMMAND = "curl -fsSL puku.sh/install | sh";
 const STORAGE_KEY = "puku-welcome-done";
 /** Rows that count toward setup progress (Cowork is early access, not set up yet). */
 const COUNTED: ProductId[] = ["desktop", "cli", "chat", "bot"];
+const NAMES: Record<ProductId, string> = { desktop: "Desktop", cli: "CLI", chat: "Chat", bot: "Bot", cowork: "Cowork" };
+
+/** "Chat is ready · 3 to go", "Chat and CLI are ready · 2 to go", "You're all set". */
+function progressLabel(ready: ProductId[]) {
+  if (!ready.length) return "Pick one to get started";
+  if (ready.length === COUNTED.length) return "You're all set";
+  const names = ready.map((id) => NAMES[id]);
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+  return `${list} ${names.length === 1 ? "is" : "are"} ready · ${COUNTED.length - ready.length} to go`;
+}
 
 const Laptop = (p: { size?: number }) => (
   <svg width={p.size ?? 20} height={p.size ?? 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -63,7 +73,8 @@ export function Welcome({ plan }: { plan: string }) {
     const ua = navigator.userAgent;
     setOs(/Win/.test(ua) ? "Windows" : /Linux|X11/.test(ua) && !/Android/.test(ua) ? "Linux" : "Mac");
   }, []);
-  const count = COUNTED.filter((id) => done.includes(id)).length;
+  const ready = COUNTED.filter((id) => done.includes(id));
+  const icons: Record<ProductId, React.ReactNode> = { desktop: <Laptop size={13} />, cli: <Terminal size={13} />, chat: <Chat size={13} />, bot: <Bot size={13} />, cowork: <People size={13} /> };
 
   return (
     <section className="flex min-h-svh justify-center px-4 pt-[clamp(48px,8vw,96px)] pb-16">
@@ -110,14 +121,24 @@ export function Welcome({ plan }: { plan: string }) {
         </ul>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3" aria-live="polite">
-            <div className="flex gap-1" aria-hidden>
-              {COUNTED.map((id, i) => (
-                <span key={id} className={`h-1 w-5 rounded-full transition-colors duration-500 ${i < count ? "bg-success" : "bg-[var(--border)]"}`} />
-              ))}
-            </div>
-            <span className="font-mono text-[12px] text-muted">
-              {count} of {COUNTED.length} set up
+          <div className="flex items-center gap-3">
+            <ul className="flex gap-1.5" aria-label="Setup progress">
+              {COUNTED.map((id) => {
+                const on = done.includes(id);
+                return (
+                  <li
+                    key={id}
+                    title={`${NAMES[id]}${on ? " · ready" : ""}`}
+                    aria-label={`${NAMES[id]}: ${on ? "ready" : "not set up"}`}
+                    className={`grid size-[26px] place-items-center rounded-full border transition-colors duration-500 ${on ? "border-success bg-success text-panel" : "border-line text-muted/70"}`}
+                  >
+                    {icons[id]}
+                  </li>
+                );
+              })}
+            </ul>
+            <span className="font-mono text-[12px] text-muted" aria-live="polite">
+              {progressLabel(ready)}
             </span>
           </div>
           <div className="flex items-center gap-4">
