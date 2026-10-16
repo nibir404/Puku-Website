@@ -412,9 +412,11 @@ export function TeamProducts() {
 
 type Row = [string, string, string, string, string];
 
-const GROUPS: { title: string; rows: Row[] }[] = [
+/** `summary` decides what a collapsed group shows per plan: how many rows are included, or its first row's value. */
+const GROUPS: { title: string; tag?: string; summary: "count" | "first"; rows: Row[] }[] = [
   {
     title: "Usage",
+    summary: "first",
     rows: [
       ["Agent requests", "50 / day", "500 / day", "pooled", "custom"],
       ["Usage vs. Free", "1×", "10×", "pooled", "custom"],
@@ -422,6 +424,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   },
   {
     title: "Puku features",
+    summary: "count",
     rows: [
       ["Chat modes", "Quick", "Quick · Research · Deep", "all", "all"],
       ["Background runs", "—", "✓", "✓", "✓"],
@@ -430,7 +433,9 @@ const GROUPS: { title: string; rows: Row[] }[] = [
     ],
   },
   {
-    title: "Team products · Team & Enterprise only",
+    title: "Team products",
+    tag: "Team & Enterprise",
+    summary: "count",
     rows: [
       ["Puku Bot", "—", "—", "Slack + GitHub", "+ custom integrations"],
       ["Puku Cloud", "—", "—", "pooled hours", "custom + self-hosted"],
@@ -439,6 +444,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   },
   {
     title: "Team management",
+    summary: "count",
     rows: [
       ["Centralized billing", "—", "—", "✓", "✓"],
       ["SSO, SCIM, audit log", "—", "—", "SSO", "✓"],
@@ -448,6 +454,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   },
   {
     title: "Support",
+    summary: "first",
     rows: [
       ["Support", "Discord", "email", "priority", "dedicated"],
       ["Priority model access", "—", "✓", "✓", "✓"],
@@ -455,92 +462,206 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   },
 ];
 
+const HEADS = PLANS.map((p) => ({ name: p.name, price: p.usd < 0 ? "Custom" : p.usd === 0 ? "$0 forever" : `$${p.usd} ${p.unit}`, cta: p.cta, href: p.href }));
+/** Plan i adds something over plan i-1 in this row. */
+const isNew = (r: Row, i: number) => i > 0 && r[i + 1] !== "—" && r[i + 1] !== r[i];
+const summarize = (g: (typeof GROUPS)[number], i: number) => {
+  if (g.summary === "first") return g.rows[0][i + 1];
+  const n = g.rows.filter((r) => r[i + 1] !== "—").length;
+  return n ? `${n} of ${g.rows.length}` : "—";
+};
+
+function Cell({ v, focused, fresh, delay = 0 }: { v: string; focused: boolean; fresh: boolean; delay?: number }) {
+  const check = v.startsWith("✓");
+  const rest = check ? v.slice(1).trim() : v;
+  return (
+    <span className="flex min-w-0 items-center gap-2 px-4">
+      <AnimatePresence initial={false}>
+        {fresh && (
+          <motion.span
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 28, delay }}
+            title="New in this plan"
+            className="grid size-4 shrink-0 place-items-center rounded-full bg-accent text-[11px] leading-none font-[570] text-accent-ink"
+          >
+            +
+          </motion.span>
+        )}
+      </AnimatePresence>
+      {v === "—" ? (
+        <span aria-label="Not included" className="block h-[1.5px] w-2.5 rounded-full bg-[var(--border)]" />
+      ) : check ? (
+        <span className="flex items-center gap-2">
+          <span aria-label="Included" className={`grid size-[18px] shrink-0 place-items-center rounded-full transition-[background-color] duration-300 ${focused ? "bg-success" : "bg-[color-mix(in_oklab,var(--success)_55%,transparent)]"}`}>
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+              <motion.path d="M2 5.2 4.1 7.2 8 3" stroke="var(--panel)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.1 + delay }} />
+            </svg>
+          </span>
+          {rest && <span className={`font-mono text-[13px] leading-4 ${focused ? "text-fg" : "text-muted"}`}>{rest}</span>}
+        </span>
+      ) : (
+        <span className={`font-mono text-[13px] leading-4 transition-colors duration-300 ${focused ? "text-fg" : "text-muted"}`}>{v}</span>
+      )}
+    </span>
+  );
+}
+
+const GRID = "grid grid-cols-[2fr_repeat(4,1fr)] items-center";
+
 export function Compare() {
-  const [col, setCol] = useState<number | null>(null);
-  const [pick, setPick] = useState(1);
-  const heads = ["Free", "Pro", "Team", "Enterprise"];
+  const [focus, setFocus] = useState(1);
+  const [open, setOpen] = useState<boolean[]>(() => GROUPS.map((_, i) => i < 2));
+  const allOpen = open.every(Boolean);
+  const toggle = (gi: number) => setOpen((o) => o.map((v, i) => (i === gi ? !v : v)));
+
   return (
     <section className="border-t border-line py-16 sm:py-24">
       <div className="container-x">
-        <Reveal>
-          <h2 className="pb-4 text-[clamp(28px,2.22vw,32px)] leading-[1.25] md:pb-8 font-[570] tracking-[-0.02em] text-fg">Compare features across plans</h2>
-        </Reveal>
-        {/* Mobile: pick a plan, read its column as a list. */}
-        <div className="md:hidden">
-          <div className="sticky top-[76px] z-10 -mx-1 bg-main px-1 py-2">
-            <div className="flex gap-0.5 rounded-control border border-line bg-panel p-1">
-              {heads.map((h, i) => (
-                <button key={h} onClick={() => setPick(i)} aria-pressed={pick === i} className={`relative flex-1 rounded-control py-2 text-[13px] leading-4 transition-colors ${pick === i ? "text-main" : "text-muted"}`}>
-                  {pick === i && <motion.span layoutId="compare-pick" className="absolute inset-0 rounded-control bg-fg" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
-                  <span className="relative">{h}</span>
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col justify-between gap-4 pb-6 md:flex-row md:items-end md:pb-10">
+          <Reveal className="flex flex-col gap-2.5">
+            <h2 className="text-[clamp(28px,2.22vw,32px)] leading-[1.25] font-[570] tracking-[-0.02em] text-fg">Compare features across plans</h2>
+            <p className="text-[16px] leading-6 text-muted">Pick a plan to see what it adds over the one before.</p>
+          </Reveal>
+          <Reveal delay={0.1} className="flex items-center gap-4 text-[13px] text-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="grid size-4 place-items-center rounded-full bg-success">
+                <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden>
+                  <path d="M2 5.2 4.1 7.2 8 3" stroke="var(--panel)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              Included
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="grid size-4 place-items-center rounded-full bg-accent text-[11px] leading-none font-[570] text-accent-ink">+</span>
+              New in this plan
+            </span>
+          </Reveal>
+        </div>
+
+        {/* Plan picker: sticky segmented control on mobile, sticky plan header on desktop */}
+        <div className="sticky top-[64px] z-20 -mx-1 bg-main px-1 py-2 md:hidden">
+          <div role="tablist" aria-label="Focus a plan" className="flex gap-0.5 rounded-control border border-line bg-panel p-1">
+            {HEADS.map((h, i) => (
+              <button key={h.name} role="tab" aria-selected={focus === i} onClick={() => setFocus(i)} className={`relative flex-1 rounded-control py-2 text-[13px] leading-4 transition-colors ${focus === i ? "text-main" : "text-muted"}`}>
+                {focus === i && <motion.span layoutId="compare-pick" className="absolute inset-0 rounded-control bg-fg" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
+                <span className="relative">{h.name}</span>
+              </button>
+            ))}
           </div>
+        </div>
+
+        {/* Mobile: the focused plan's column as a list */}
+        <div className="md:hidden">
           {GROUPS.map((g) => (
             <div key={g.title} className="pt-6">
-              <div className="border-b border-line pb-2.5 text-[15px] leading-5 font-[570] text-fg">{g.title}</div>
-              {g.rows.map((r) => {
-                const v = r[pick + 1];
-                return (
-                  <div key={r[0]} className="flex items-baseline justify-between gap-4 border-b border-line py-3.5">
-                    <span className="text-[15px] leading-5 text-fg">{r[0]}</span>
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      <motion.span
-                        key={v + pick}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className={`shrink-0 text-right font-mono text-[13px] leading-5 ${v === "—" ? "text-muted" : v.startsWith("✓") ? "text-success" : "text-fg"}`}
-                      >
-                        {v}
-                      </motion.span>
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
+              <div className="flex items-center gap-2 border-b border-line pb-2.5">
+                <span className="text-[15px] leading-5 font-[570] text-fg">{g.title}</span>
+                {g.tag && <span className="rounded-control bg-hover px-[7px] py-0.5 text-[11px] text-muted">{g.tag}</span>}
+              </div>
+              {g.rows.map((r) => (
+                <div key={r[0]} className="flex items-center justify-between gap-4 border-b border-line py-3">
+                  <span className="text-[15px] leading-5 text-fg">{r[0]}</span>
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span key={`${r[0]}-${focus}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="-mr-4 shrink-0">
+                      <Cell v={r[focus + 1]} focused fresh={isNew(r, focus)} />
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              ))}
             </div>
           ))}
         </div>
 
-        <div className="-mx-4 hidden overflow-x-auto px-4 md:block" data-lenis-prevent onMouseLeave={() => setCol(null)}>
-          <div className="min-w-[720px]">
-            <div className="flex border-b border-fg py-3.5">
-              <span className="flex-[2] font-mono text-[11px] leading-[14px] tracking-[0.08em] text-muted">FEATURE</span>
-              {heads.map((h, i) => (
-                <span key={h} onMouseEnter={() => setCol(i)} className={`flex-1 text-[14px] leading-[18px] font-[570] transition-colors ${col === i ? "text-accent" : "text-fg"}`}>
-                  {h}
+        {/* Desktop: full table with a focus band that slides between plans */}
+        <div className="relative hidden md:block">
+          <div aria-hidden className={`${GRID} pointer-events-none absolute inset-0`}>
+            <motion.div
+              className="h-full rounded-panel border border-[color-mix(in_oklab,var(--accent)_25%,transparent)] bg-[color-mix(in_oklab,var(--accent)_6%,transparent)]"
+              style={{ gridColumn: focus + 2, gridRow: 1 }}
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 40 }}
+            />
+          </div>
+
+          <div role="tablist" aria-label="Focus a plan" className={`${GRID} sticky top-[64px] z-20 border-b border-fg bg-[color-mix(in_oklab,var(--main)_92%,transparent)] backdrop-blur-[8px]`}>
+            <span className="self-end py-4 font-mono text-[11px] leading-[14px] tracking-[0.08em] text-muted">FEATURE</span>
+            {HEADS.map((h, i) => {
+              const on = focus === i;
+              return (
+                <div key={h.name} className="flex flex-col gap-2 px-4 py-4">
+                  <button role="tab" aria-selected={on} onClick={() => setFocus(i)} className="group/h flex flex-col items-start gap-1 text-left">
+                    <span className="flex items-center gap-2">
+                      <span className={`text-[15px] leading-5 font-[570] transition-colors ${on ? "text-fg" : "text-muted group-hover/h:text-fg"}`}>{h.name}</span>
+                      {on && <motion.span layoutId="focus-tag" className="font-mono text-[10px] tracking-[0.06em] text-accent">FOCUSED</motion.span>}
+                    </span>
+                    <span className={`text-[13px] leading-4 transition-colors ${on ? "text-fg" : "text-muted"}`}>{h.price}</span>
+                  </button>
+                  {on ? (
+                    <motion.a layoutId="focus-cta" href={h.href} className="flex h-[30px] items-center justify-center rounded-control bg-fg text-[13px] font-[570] text-panel transition-transform active:scale-[0.97]">
+                      {h.cta}
+                    </motion.a>
+                  ) : (
+                    <a href={h.href} className="flex h-[30px] items-center text-[13px] text-muted transition-colors hover:text-fg">
+                      {h.cta} →
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {GROUPS.map((g, gi) => (
+            <div key={g.title} className="relative">
+              <button onClick={() => toggle(gi)} aria-expanded={open[gi]} className={`${GRID} group/g w-full border-b border-line pt-7 pb-3 text-left`}>
+                <span className="flex items-center gap-2.5">
+                  <motion.svg animate={{ rotate: open[gi] ? 0 : -90 }} transition={{ duration: 0.25 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted transition-colors group-hover/g:text-fg" aria-hidden>
+                    <path d="m6 9 6 6 6-6" />
+                  </motion.svg>
+                  <span className="text-[16px] leading-5 font-[570] text-fg">{g.title}</span>
+                  <span className="font-mono text-[12px] text-muted">{g.rows.length}</span>
+                  {g.tag && <span className="rounded-control bg-hover px-[7px] py-0.5 text-[12px] text-muted">{g.tag}</span>}
                 </span>
-              ))}
-            </div>
-            {GROUPS.map((g) => (
-              <Fragment key={g.title}>
-                <div className="border-b border-line pt-8 pb-3 text-[16px] leading-5 font-[570] text-fg">{g.title}</div>
-                {g.rows.map((r, ri) => (
-                  <motion.div
-                    key={r[0]}
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: ri * 0.04 }}
-                    className="group/cr flex border-b border-line py-4 transition-colors hover:bg-[color-mix(in_oklab,var(--hover)_60%,transparent)]"
-                  >
-                    <span className="flex-[2] text-[15px] leading-[18px] text-fg">{r[0]}</span>
-                    {r.slice(1).map((c, i) => (
-                      <span
-                        key={i}
-                        onMouseEnter={() => setCol(i)}
-                        className={`flex-1 font-mono text-[13px] leading-4 transition-colors ${c === "—" || i === 0 ? "text-muted" : "text-fg"} ${col === i ? "text-accent!" : ""}`}
+                {HEADS.map((_, i) => (
+                  <AnimatePresence key={i} initial={false}>
+                    {!open[gi] && (
+                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`px-4 font-mono text-[12px] ${focus === i ? "text-fg" : "text-muted"}`}>
+                        {summarize(g, i)}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                ))}
+              </button>
+              <AnimatePresence initial={false}>
+                {open[gi] && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: EASE }} className="overflow-hidden">
+                    {g.rows.map((r, ri) => (
+                      <motion.div
+                        key={r[0]}
+                        initial={{ opacity: 0, y: 8 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: ri * 0.04 }}
+                        className={`${GRID} min-h-14 border-b border-line transition-colors hover:bg-[color-mix(in_oklab,var(--hover)_45%,transparent)]`}
                       >
-                        {c}
-                      </span>
+                        <span className="text-[15px] leading-5 text-fg">{r[0]}</span>
+                        {HEADS.map((_, i) => (
+                          <Cell key={i} v={r[i + 1]} focused={focus === i} fresh={focus === i && isNew(r, i)} delay={ri * 0.03} />
+                        ))}
+                      </motion.div>
                     ))}
                   </motion.div>
-                ))}
-              </Fragment>
-            ))}
-          </div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+
+        </div>
+        <div className="hidden justify-center pt-6 md:flex">
+          <button onClick={() => setOpen(GROUPS.map(() => !allOpen))} className="text-[14px] text-accent transition-opacity hover:opacity-80">
+            {allOpen ? "Collapse groups" : "Expand all groups"}
+          </button>
         </div>
       </div>
     </section>
