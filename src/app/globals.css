@@ -23,6 +23,18 @@
   --shadow-window: #282c2224 0 24px 60px, #4b50d612 0 -10px 80px 4px;
   --glow-product: #4b50d614 0 0 100px 4px;
   --nav-scrolled: color-mix(in oklab, var(--panel) 78%, transparent);
+  /* Isometric story art (scripts/iso-gen.py) */
+  --iso-ink: var(--text);
+  --iso-muted: var(--muted);
+  --iso-ghost: var(--border);
+  --iso-face: var(--panel);
+  --iso-a-top: #dcddfb;
+  --iso-a-left: #b0b3fc;
+  --iso-a-right: var(--accent);
+  --iso-a-soft: #ececfb;
+  --iso-b-top: var(--muted);
+  --iso-b-left: #34362e;
+  --iso-b-right: var(--text);
   color-scheme: light;
 }
 
@@ -45,6 +57,17 @@
   --shadow-window: #00000080 0 24px 60px, #b0b3fc2e 0 -10px 90px 6px;
   --glow-product: #b0b3fc33 0 0 120px 8px;
   --nav-scrolled: color-mix(in oklab, var(--panel) 72%, transparent);
+  --iso-ink: #c9cbbe;
+  --iso-muted: var(--muted);
+  --iso-ghost: var(--border);
+  --iso-face: var(--panel);
+  --iso-a-top: var(--accent);
+  --iso-a-left: #7377d6;
+  --iso-a-right: #484dd0;
+  --iso-a-soft: #25263a;
+  --iso-b-top: var(--text);
+  --iso-b-left: #c9cbbe;
+  --iso-b-right: var(--muted);
   color-scheme: dark;
 }
 
@@ -223,4 +246,83 @@ html.lenis body {
 /* App-like touch: no grey flash on tap */
 html {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Isometric story art ─────────────────────────────────
+   Groups enter in order (--i set in IsoArt), then ambient loops take over. */
+.iso svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.iso svg > g {
+  opacity: 0;
+  translate: 0 14px;
+}
+.iso[data-play] svg > g {
+  animation: iso-in 700ms var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 110ms);
+}
+@keyframes iso-in {
+  to { opacity: 1; translate: 0 0; }
+}
+/* Dashed connectors march toward their target */
+.iso[data-play] .flow[stroke-dasharray] {
+  animation: iso-flow 1.4s linear infinite;
+}
+@keyframes iso-flow {
+  to { stroke-dashoffset: -20; }
+}
+/* Built-up parts: each cell / slab / rack drops in on its own beat (--j set in IsoArt) */
+.iso [data-build] > * {
+  opacity: 0;
+  translate: 0 -18px;
+}
+.iso[data-play] [data-build] > * {
+  animation: iso-drop 520ms var(--ease-out-expo) both;
+  animation-delay: calc(400ms + var(--j, 0) * 45ms);
+}
+@keyframes iso-drop {
+  to { opacity: 1; translate: 0 0; }
+}
+/* LEDs on GPU racks */
+.iso[data-play] [id^="rack-"] path[stroke-width="2.2"] {
+  animation: iso-blink 2.4s steps(1) infinite;
+  animation-delay: calc(var(--j, 0) * 300ms);
+}
+@keyframes iso-blink {
+  50% { opacity: 0.25; }
+}
+/* Interactive states driven by data-active on the wrapper */
+.iso polygon,
+.iso [id^="model-"],
+.iso [id^="partner-"] {
+  transition: fill 300ms var(--ease-out), transform 400ms var(--ease-out-expo), filter 300ms var(--ease-out);
+}
+.iso[data-active="feluda"] #model-feluda,
+.iso[data-active="puku-ai"] #model-puku-ai {
+  transform: translateY(-10px);
+}
+.iso[data-active="feluda"] #model-puku-ai,
+.iso[data-active="puku-ai"] #model-feluda {
+  filter: opacity(0.4);
+}
+.iso[data-active="lambda"] #partner-lambda polygon,
+.iso[data-active="bria"] #partner-bria polygon,
+.iso[data-active="nebius"] #partner-nebius polygon,
+.iso[data-active="scaleway"] #partner-scaleway polygon {
+  fill: var(--iso-a-top);
+}
+.iso[data-active="lambda"] #partner-lambda,
+.iso[data-active="bria"] #partner-bria,
+.iso[data-active="nebius"] #partner-nebius,
+.iso[data-active="scaleway"] #partner-scaleway {
+  transform: translateY(-8px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .iso svg > g,
+  .iso [data-build] > * {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
