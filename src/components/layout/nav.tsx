@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { buttonClass } from "@/components/ui/button";
 import { Blocks, Book, Chat, Chevron, Cloud, Code, Palette, Phone, Terminal, Wand } from "@/components/ui/icons";
 import { useLenis } from "@/components/smooth-scroll";
+import { isFocusRoute } from "@/lib/routes";
 
 const PRODUCTS = [
   { href: "/editor", icon: Code, title: "Puku Editor", body: "The Puku Editor desktop app" },
@@ -69,6 +70,8 @@ export function Nav() {
   const isActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href));
   const productActive = PRODUCTS.some((p) => isActive(p.href));
   const resourcesActive = RESOURCES.some((r) => isActive(r.href));
+
+  if (isFocusRoute(pathname)) return null;
 
   return (
     <>

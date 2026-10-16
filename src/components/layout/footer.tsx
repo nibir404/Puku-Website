@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { isFocusRoute } from "@/lib/routes";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/ui/logo";
 import { PixelCanvas } from "@/components/fx/pixel-canvas";
@@ -49,6 +51,8 @@ const COLS = [
 ];
 
 export function Footer() {
+  const pathname = usePathname();
+  if (isFocusRoute(pathname)) return null;
   return (
     <footer className="relative isolate overflow-hidden border-t border-line bg-sidebar">
       {/* Glow */}
