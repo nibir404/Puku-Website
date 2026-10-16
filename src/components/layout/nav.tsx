@@ -184,6 +184,22 @@ export function Nav() {
         </motion.nav>
       </header>
 
+      {/* Mega menu backdrop: blurs and quiets the page while a menu is open */}
+      <AnimatePresence>
+        {menu && (
+          <motion.div
+            key="mega-backdrop"
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={() => setMenu(null)}
+            className="fixed inset-0 z-40 hidden bg-[color-mix(in_oklab,var(--main)_35%,transparent)] backdrop-blur-[6px] md:block"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Mobile sheet */}
       <AnimatePresence>
         {mobile && (
